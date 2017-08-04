@@ -56,8 +56,38 @@ class MRCoreDataStore {
         self.storeDirectory = storeDirectory
         do {try createStore()}catch{ throw error }
     }
-    public func select<T:NSManagedObject>(predicate: NSPredicate) -> [T]? {
-    if let context =  self.backgroundTheadFetchContext() {
+    
+    public func selectFirst<T:NSManagedObject>(_ predicate: NSPredicate?) -> T? {
+        if let context =  self.backgroundTheadFetchContext() {
+            let fetchRequest = T.fetchRequest()
+            fetchRequest.predicate = predicate
+            let results = try! context.fetch(fetchRequest) as! [T]
+            return results.first
+        }
+        return nil
+    }
+    
+    public func selectLast<T:NSManagedObject>(_ predicate: NSPredicate?) -> T? {
+        if let context =  self.backgroundTheadFetchContext() {
+            let fetchRequest = T.fetchRequest()
+            fetchRequest.predicate = predicate
+            let results = try! context.fetch(fetchRequest) as! [T]
+            return results.last
+        }
+        return nil
+    }
+    
+    public func selectAll<T:NSManagedObject>() -> [T]? {
+        if let context =  self.backgroundTheadFetchContext() {
+            let fetchRequest = T.fetchRequest()
+            let results = try! context.fetch(fetchRequest) as! [T]
+            return results
+        }
+        return nil
+    }
+    
+    public func selectAll<T:NSManagedObject>(where predicate: NSPredicate) -> [T]? {
+        if let context =  self.backgroundTheadFetchContext() {
             let fetchRequest = T.fetchRequest()
             fetchRequest.predicate = predicate
             let results = try! context.fetch(fetchRequest) as! [T]
@@ -66,12 +96,48 @@ class MRCoreDataStore {
         return nil
     }
     
-    public func backgroundTheadSaveContext() -> NSManagedObjectContext? {
+    public func defaultDeleteContext() -> NSManagedObjectContext? {
         if let ayncSaveOrDeleteContext = self.ayncSaveOrDeleteContext {
-                return ayncSaveOrDeleteContext
+            return ayncSaveOrDeleteContext
         }
         return nil
     }
+    
+    public func defaultSaveContext() -> NSManagedObjectContext? {
+        if let ayncSaveOrDeleteContext = self.ayncSaveOrDeleteContext {
+            return ayncSaveOrDeleteContext
+        }
+        return nil
+    }
+    
+    public func defaultFetchContext() -> NSManagedObjectContext? {
+        if let fetch = self.asyncDataFetchContext {
+            return fetch
+        }
+        return nil
+    }
+    
+    public func mainThreadContext() -> NSManagedObjectContext? {
+        if let main = self.mainContext {
+            return main
+        }
+        return nil
+    }
+    
+    public func backgroundTheadSaveContext() -> NSManagedObjectContext? {
+        if let ayncSaveOrDeleteContext = self.ayncSaveOrDeleteContext {
+            return ayncSaveOrDeleteContext
+        }
+        return nil
+    }
+    
+    public func backgroundTheadDeleteContext() -> NSManagedObjectContext? {
+        if let ayncSaveOrDeleteContext = self.ayncSaveOrDeleteContext {
+            return ayncSaveOrDeleteContext
+        }
+        return nil
+    }
+
     public func backgroundTheadFetchContext() -> NSManagedObjectContext? {
         if let fetch = self.asyncDataFetchContext {
             return fetch
@@ -84,18 +150,7 @@ class MRCoreDataStore {
         context.automaticallyMergesChangesFromParent = true
         return context
     }
-    public func mainThreadContext() -> NSManagedObjectContext? {
-        if let main = self.mainContext {
-            return main
-        }
-        return nil
-    }
-    public func backgroundTheadDeleteContext() -> NSManagedObjectContext? {
-        if let ayncSaveOrDeleteContext = self.ayncSaveOrDeleteContext {
-            return ayncSaveOrDeleteContext
-        }
-        return nil
-    }
+    
     private func createStore() throws {
         
         //This resource is the same name as your xcdatamodeld contained in your project

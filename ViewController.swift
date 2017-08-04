@@ -21,9 +21,8 @@ class ViewController: UIViewController {
             })
         }
         
-        
         let predicate: NSPredicate = NSPredicate(format:"taskName = %@", argumentArray: ["m16"] )
-        if  let result:[Task] = MRCoreData.defaultStore?.select(predicate: predicate) {
+        if  let result:[Task] = MRCoreData.defaultStore?.selectAll(where: predicate) {
           print(result.first?.taskName)
             
         }
@@ -36,7 +35,7 @@ class ViewController: UIViewController {
         let fetchRequest = NSFetchRequest<Task>(entityName: "Task")
         fetchRequest.predicate = predicate
         
-        let result = try! MRCoreData.defaultStore?.getNewBackgroundTheadContext().fetch(fetchRequest) as! Array<Task>
+        let result = try! MRCoreData.defaultStore?.getNewBackgroundTheadContext().fetch(fetchRequest) as? [Task]
         
     }
     override func viewDidLoad() {
