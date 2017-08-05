@@ -77,19 +77,25 @@ class MRCoreDataStore {
         return nil
     }
     
-    public func selectAll<T:NSManagedObject>() -> [T]? {
+    public func selectAll<T:NSManagedObject>(sortDescriptors: [NSSortDescriptor]? = nil) -> [T]? {
         if let context =  self.backgroundTheadFetchContext() {
             let fetchRequest = T.fetchRequest()
+            if let sortDescriptors = sortDescriptors {
+                fetchRequest.sortDescriptors = sortDescriptors
+            }
             let results = try! context.fetch(fetchRequest) as! [T]
             return results
         }
         return nil
     }
     
-    public func selectAll<T:NSManagedObject>(where predicate: NSPredicate) -> [T]? {
+    public func selectAll<T:NSManagedObject>(where predicate: NSPredicate,sortDescriptors: [NSSortDescriptor]? = nil) -> [T]? {
         if let context =  self.backgroundTheadFetchContext() {
             let fetchRequest = T.fetchRequest()
             fetchRequest.predicate = predicate
+            if let sortDescriptors = sortDescriptors {
+                fetchRequest.sortDescriptors = sortDescriptors
+            }
             let results = try! context.fetch(fetchRequest) as! [T]
             return results
         }
@@ -194,6 +200,8 @@ class MRCoreDataStore {
         asyncDataFetchContext?.automaticallyMergesChangesFromParent = true
         
         NotificationCenter.default.addObserver(self, selector: #selector(MRCoreDataStore.mainContextDidSave(_:)), name: NSNotification.Name.NSManagedObjectContextDidSave, object: mainContext)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(MRCoreDataStore.ayncSaveOrDeleteContextDidSave(_:)), name: NSNotification.Name.NSManagedObjectContextDidSave, object: ayncSaveOrDeleteContext)
     }
     
 //  open func saveContextAndWait(_ context: NSManagedObjectContext) {
@@ -235,11 +243,35 @@ class MRCoreDataStore {
 //            }
 //        }
 //    }
+    @objc private func ayncSaveOrDeleteContextDidSave(_ notification: Notification) {
+//        DispatchQueue.main.async() {
+//           //self.asyncDataFetchContext?.performAndWait {
+//            //try? self.mainContext?.save()
+//        }
+        
+//        if let userInfo = notification.userInfo {
+//            for item in userInfo {
+//              // print(item.value)
+//                if let set = item.value as? NSSet, let object = set.allObjects.first as? NSManagedObject {
+//                    //self.ayncSaveOrDeleteContext?.
+//                  
+//                }
+//            }
+//        }
+        self.mainContext?.refreshAllObjects()
+        self.asyncDataFetchContext?.refreshAllObjects()
+   
+        
+//        DispatchQueue.main.async() {
+//        self.asyncDataFetchContext?.performAndWait {
+//        try? self.asyncDataFetchContext?.obtainPermanentIDs(for:(self.asyncDataFetchContext?.insertedObjects.reversed())!)
+//        try? self.asyncDataFetchContext?.save()
+//        }
+//        }
+    }
     
     @objc private func mainContextDidSave(_ notification: Notification) {
-        DispatchQueue.main.async() {
-           // self.saveContext(self.asyncDataFetchContext!)
-        }
+        self.asyncDataFetchContext?.refreshAllObjects()
     }
     
 }
